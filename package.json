@@ -6,6 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "type": "module",
+  "bin": {
+    "vmtranslator": "./main.js"
+  },
   "author": "hiten solanki",
   "license": "ISC"
 }
