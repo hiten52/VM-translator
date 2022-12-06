@@ -4,7 +4,6 @@ class Parser {
     constructor(source) {
         this.source = source.trim().split(/\r?\n/)
         this.tokens = []
-        this.createTokens()
     }
 
     createTokens() {
