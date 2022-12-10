@@ -3,13 +3,17 @@ const address = {
     argument: "ARG",
     this: "THIS",
     that: "THAT",
-    temp: "5"
+    temp: "5",
+    and: "&",
+    or: "|",
+    not: "!"
 }
 
 class CodeWriter {
     constructor(tokens, filename) {
         this.tokens = tokens
         this.filename = filename.slice(0,-3)
+        this.counter = 0
     }
 
     writeCode() {
@@ -41,10 +45,10 @@ class CodeWriter {
             let lable = address[token.segment]
             codeblock += 
             `
-            @${lable}
-            D=M
             @${token.i}
-            D=D+A`
+            D=A
+            @${lable}
+            D=D+M`
 
             if(token.type === "POP") {
                 codeblock +=`
@@ -92,6 +96,104 @@ class CodeWriter {
                 M=M+1
                 `
             }
+        } else if(token.segment === "pointer") {
+            var lable;
+            if(token.i === '0')lable = "THIS"
+            else lable = "THAT"
+            if(token.type === "POP") {
+                codeblock +=`
+                @SP
+                M=M-1
+                A=M
+                D=M
+                @${lable}
+                M=D
+                `
+            } else if(token.type === "PUSH") {
+                codeblock +=
+                `
+                @${lable}
+                D=M
+                @SP
+                A=M
+                M=D
+                @SP
+                M=M+1
+                `
+            }
+        }
+        return codeblock
+    }
+
+    writeArithmetic(token) {
+        var codeblock = 
+        `
+        @SP
+        M=M-1
+        A=M
+        D=M`
+
+        if(token.value === "add") {
+            codeblock += 
+            `
+            @SP
+            M=M-1
+            A=M
+            M=M+D
+            @SP
+            M=M+1`
+        } else if(token.value === "sub") {
+            codeblock += 
+            `
+            @SP
+            M=M-1
+            A=M
+            M=M-D
+            @SP
+            M=M+1`
+        } else if(token.value === "neg" || token.value === "not") {
+            var op;
+            if(token.value === "neg")op = '-'
+            else op='!'
+            codeblock +=
+            `
+            D=${op}M
+            M=D
+            @SP
+            M=M+1`
+        } else if(token.value === "eq" || token.value === "gt" || token.value === "lt") {
+            var command = token.value.toUpperCase()
+            codeblock += 
+            `
+            @SP
+            M=M-1
+            A=M
+            D=M-D
+            @${command}${this.counter}
+            D;J${command}
+            D=0
+            @FINAL_${command}${this.counter}
+            0;JEQ
+            (${command}${this.counter})
+            D=-1
+            (FINAL_${command}${this.counter++})
+            @SP
+            A=M
+            M=D
+            @SP
+            M=M+1
+            `
+        } else if(token.value === 'and' || token.value === 'or') {
+            codeblock += 
+            `
+            @SP
+            M=M-1
+            A=M
+            D=${token.value === 'not'? "" :"D"}${address[token.value]}M
+            M=D
+            @SP
+            M=M+1
+            `
         }
         return codeblock
     }
