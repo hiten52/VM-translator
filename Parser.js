@@ -18,9 +18,15 @@ class Parser {
     createToken(line) {
         let word = line[0]
         switch (word) {
-            case keywords.ADD || keywords.SUBTRACT || keywords.NEGATIVE 
-              || keywords.NOT || keywords.OR || keywords.AND || keywords.GREATER_THAN
-              || keywords.LESS_THAN || keywords.EQUAL :
+            case keywords.ADD:
+            case keywords.SUBTRACT:
+            case keywords.NEGATIVE:
+            case keywords.NOT:
+            case keywords.OR:
+            case keywords.AND:
+            case keywords.GREATER_THAN:
+            case keywords.LESS_THAN:
+            case keywords.EQUAL:
                 this.tokens.push({type:"ARITHMETIC", value:word})
                 break
             case keywords.POP :
@@ -30,7 +36,7 @@ class Parser {
                 this.tokens.push({type:"PUSH", segment: line[1], i:line[2]})
                 break
             default :
-                throw new Error(`Invalid keyword ${word}`)
+                console.log(`Invalid keyword ${word}`)
         }
     }   
 }
