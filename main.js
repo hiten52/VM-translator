@@ -13,7 +13,7 @@ const source = await readFile(inputFileName)
                 .catch(err => err.message)
 
 let tokens = new Parser(source).createTokens()
-let code = new CodeWriter(tokens).writeCode()
+let code = new CodeWriter(tokens, inputFileName).writeCode()
 
 const output = await writeFile(outputFileName, code)
                 .catch(err => err.message)
