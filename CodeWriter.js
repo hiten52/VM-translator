@@ -23,6 +23,8 @@ class CodeWriter {
                 code += this.writePopAndPush(token)
             } else if(token.type === 'ARITHMETIC') {
                 code += this.writeArithmetic(token)
+            } else if(token.type === 'LABEL') {
+                code += this.writeLabel(token)
             }
         });
         return code
@@ -193,6 +195,30 @@ class CodeWriter {
             M=D
             @SP
             M=M+1
+            `
+        }
+        return codeblock
+    }
+
+    writeLabel(token) {
+        var codeblock = ""
+        if(token.subtype === "label")
+            codeblock+=`(${token.value})`
+        else if(token.subtype === "goto") {
+            codeblock += 
+            `
+            @${token.value}
+            0;JMP
+            `
+        } else if (token.subtype === "if-goto") {
+            codeblock += 
+            `
+            @SP
+            M=M-1
+            A=M
+            D=M
+            @${token.value}
+            D;JGT
             `
         }
         return codeblock
