@@ -9,7 +9,10 @@ const keywords = {
     OR: "or",
     NOT: "not",
     POP: "pop",
-    PUSH: "push"
+    PUSH: "push",
+    LABEL: "label",
+    GOTO: "goto",
+    IFGOTO: "if-goto"
 }
 
 export default keywords
