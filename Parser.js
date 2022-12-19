@@ -35,6 +35,11 @@ class Parser {
             case keywords.PUSH :
                 this.tokens.push({type:"PUSH", segment: line[1], i:line[2]})
                 break
+            case keywords.LABEL:
+            case keywords.GOTO:
+            case keywords.IFGOTO:
+                this.tokens.push({type:"LABEL", subtype:word, value:line[1]})
+                break
             default :
                 console.log(`Invalid keyword ${word}`)
         }
