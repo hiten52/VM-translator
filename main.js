@@ -31,7 +31,6 @@ for (const inputFileName of files) {
 
     let tokens = new Parser(source).createTokens()
     code += new CodeWriter(tokens, inputFileName).writeCode()
-    code += '\n'
 }
 
 const output = await writeFile(outputFileName, code)
