@@ -14,10 +14,12 @@ class CodeWriter {
         this.tokens = tokens
         this.filename = filename.slice(0,-3)
         this.counter = 0
+        this.functionList = []
     }
 
     writeCode() {
         var code = ""
+        code += this.writeBootstrap()
         this.tokens.forEach(token => {
             if(token.type === 'POP' || token.type === 'PUSH') {
                 code += this.writePopAndPush(token)
@@ -25,6 +27,12 @@ class CodeWriter {
                 code += this.writeArithmetic(token)
             } else if(token.type === 'LABEL') {
                 code += this.writeLabel(token)
+            } else if(token.type === 'FUNCTION') {
+                code += this.writeFunction(token)
+            } else if(token.type === 'CALL') {
+                code += this.writeCall(token)
+            } else if(token.type === 'RETURN') {
+                code += this.writeReturn()
             }
         });
         return code
@@ -38,7 +46,6 @@ class CodeWriter {
         D=A
         @SP
         M=D
-
         @Bootstrap$ret
         D=A
         @SP
@@ -46,7 +53,6 @@ class CodeWriter {
         M=D
         @SP
         M=M+1
-
         @LCL
         D=M
         @SP
@@ -54,7 +60,6 @@ class CodeWriter {
         M=D
         @SP
         M=M+1
-
         @ARG
         D=M
         @SP
@@ -62,7 +67,6 @@ class CodeWriter {
         M=D
         @SP
         M=M+1
-
         @THIS
         D=M
         @SP
@@ -70,7 +74,6 @@ class CodeWriter {
         M=D
         @SP
         M=M+1
-
         @THAT
         D=M
         @SP
@@ -78,24 +81,24 @@ class CodeWriter {
         M=D
         @SP
         M=M+1
-
         @SP
         D=M
-        @5
-        D=D-A
+        D=D-1
+        D=D-1
+        D=D-1
+        D=D-1
+        D=D-1
         @ARG
         M=D
-
         @SP
         D=M
         @LCL
         M=D
-
         @Sys.init
         0;JMP
-
-        (@Bootstrap$ret)
+        (Bootstrap$ret)
         `
+        return codeblock
     }
 
     writePopAndPush(token) {
@@ -118,17 +121,17 @@ class CodeWriter {
             @${token.i}
             D=A
             @${lable}
-            D=D+M`
+            D=D+${token.segment === 'temp'?'A':'M'}`
 
             if(token.type === "POP") {
                 codeblock +=`
-                @R13
+                @frame
                 M=D 
                 @SP
                 M=M-1
                 A=M
                 D=M
-                @R13
+                @frame
                 A=M
                 M=D
                 `
@@ -271,11 +274,11 @@ class CodeWriter {
     writeLabel(token) {
         var codeblock = ""
         if(token.subtype === "label")
-            codeblock+=`(${token.value})`
+            codeblock+=`(${this.functionList[this.functionList.length-1]}\$${token.value})`
         else if(token.subtype === "goto") {
             codeblock += 
             `
-            @${token.value}
+            @${this.functionList[this.functionList.length-1]}\$${token.value}
             0;JMP
             `
         } else if (token.subtype === "if-goto") {
@@ -285,12 +288,173 @@ class CodeWriter {
             M=M-1
             A=M
             D=M
-            @${token.value}
-            D;JGT
+            @${this.functionList[this.functionList.length-1]}\$${token.value}
+            D;JNE
             `
         }
         return codeblock
     }
+
+    writeFunction(token) {
+        this.functionList.push(token.name)
+
+        var codeblock = ""
+        var nvars = +token.nvars
+        codeblock += 
+        `
+        (${token.name})
+        `
+
+        for(let i=0; i<nvars; i++)
+        codeblock+=
+        `
+        @0
+        D=A
+        @SP
+        A=M
+        M=D
+        @SP
+        M=M+1
+        `
+        return codeblock
+    }
+
+    writeCall(token) {
+        var codeblock = ""
+        codeblock+=
+        `
+        @${token.name}$ret.${this.counter}
+        D=A
+        @SP
+        A=M
+        M=D
+        @SP
+        M=M+1
+        
+        @LCL
+        D=M
+        @SP
+        A=M
+        M=D
+        @SP
+        M=M+1
+
+        @ARG
+        D=M
+        @SP
+        A=M
+        M=D
+        @SP
+        M=M+1
+
+        @THIS
+        D=M
+        @SP
+        A=M
+        M=D
+        @SP
+        M=M+1
+
+        @THAT
+        D=M
+        @SP
+        A=M
+        M=D
+        @SP
+        M=M+1
+
+        D=M
+        @${5+(+token.nvars)}
+        D=D-A
+        @ARG
+        M=D
+
+        @SP
+        D=M
+        @LCL
+        M=D
+
+        @${token.name}
+        0;JMP
+
+        (${token.name}$ret.${this.counter++})
+        `
+        return codeblock
+    }
+
+    writeReturn() {
+        var codeblock=""
+        codeblock +=
+        `
+        @LCL
+        D=M
+        @frame
+        M=D
+
+        @5
+        D=D-A
+        A=D
+        D=M
+        @return
+        M=D
+
+        @SP
+        M=M-1
+        A=M
+        D=M
+        @ARG
+        A=M
+        M=D
+
+        @ARG
+        D=M+1
+        @SP
+        M=D
+
+        @frame
+        D=M
+        @1
+        D=D-A
+        A=D
+        D=M
+        @THAT
+        M=D
+
+        @frame
+        D=M
+        @2
+        D=D-A
+        A=D
+        D=M
+        @THIS
+        M=D
+
+        @frame
+        D=M
+        @3
+        D=D-A
+        A=D
+        D=M
+        @ARG
+        M=D
+
+        @frame
+        D=M
+        @4
+        D=D-A
+        A=D
+        D=M
+        @LCL
+        M=D
+
+        @return
+        A=M
+        0;JMP
+        `
+        return codeblock
+    }
+
+    
 }
 
 export default CodeWriter
