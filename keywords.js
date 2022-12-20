@@ -12,7 +12,10 @@ const keywords = {
     PUSH: "push",
     LABEL: "label",
     GOTO: "goto",
-    IFGOTO: "if-goto"
+    IFGOTO: "if-goto",
+    FUNCTION: "function",
+    CALL: "call",
+    RETURN: "return"
 }
 
 export default keywords
